@@ -6,6 +6,7 @@
 CFG_TEE_DRV_DEBUGFS?=0
 CFG_TEE_CORE_LOG_LEVEL?=2
 CFG_TEE_TA_LOG_LEVEL?=2
+CONFIG_TEE_TRACE_PERFORMANCE?=n
 
 ccflags-y+=-Werror
 ccflags-y+=-I$(M)/include/arm_common
@@ -16,6 +17,7 @@ ccflags-y+=-I$(M)/core
 ccflags-y+=-DCFG_TEE_DRV_DEBUGFS=${CFG_TEE_DRV_DEBUGFS}
 ccflags-y+=-DCFG_TEE_CORE_LOG_LEVEL=${CFG_TEE_CORE_LOG_LEVEL}
 ccflags-y+=-DCFG_TEE_TA_LOG_LEVEL=${CFG_TEE_TA_LOG_LEVEL}
+ccflags-$(CONFIG_TEE_TRACE_PERFORMANCE)+=-DCFG_TEE_TRACE_PERFORMANCE
 
 obj-m += optee_armtz.o
 

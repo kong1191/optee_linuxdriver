@@ -305,6 +305,42 @@ static u32 handle_rpc(struct tee_tz *ptee, struct smc_param *param)
 		return TEESMC32_CALL_RETURN_FROM_RPC;
 }
 
+#ifdef CFG_TEE_TRACE_PERFORMANCE
+
+static inline void print_cntvct_with_message(struct tee_tz *ptee,
+		u32 cmd, const char *msg)
+{
+#ifdef CONFIG_ARM64
+
+	u64 val;
+
+	__asm__ volatile("mrs %0, cntvct_el0" : "=r"(val));
+	dev_info(DEV, "%s, cmd=%d, cntvct=0x%llx\n", msg, cmd, val);
+
+#else
+
+	u32 cntvct_low, cntvct_high;
+
+	__asm__ volatile("mrrc	p15, 1, %0, %1, c14"
+			: "=r"(cntvct_low), "=r"(cntvct_high));
+	dev_info(DEV, "%s, cmd=%d, cntvct=0x%x%08x\n",
+			msg, cmd, cntvct_high, cntvct_low);
+
+#endif
+}
+
+#else
+
+static inline void print_cntvct_with_message(struct tee_tz *ptee,
+		u32 cmd, const char *msg)
+{
+	(void)&ptee; /*unused*/
+	(void)&cmd; /*unused*/
+	(void)&msg; /*unused*/
+}
+
+#endif
+
 static void call_tee(struct tee_tz *ptee,
 			uintptr_t parg32, struct teesmc32_arg *arg32)
 {
@@ -330,6 +366,7 @@ static void call_tee(struct tee_tz *ptee,
 
 	param.a1 = parg32;
 	e_lock_teez(ptee);
+	print_cntvct_with_message(ptee, arg32->cmd, "TEEDriver: do smc call");
 	while (true) {
 		param.a0 = funcid;
 
@@ -354,6 +391,7 @@ static void call_tee(struct tee_tz *ptee,
 			break;
 		}
 	}
+	print_cntvct_with_message(ptee, arg32->cmd, "TEEDriver: finish smc call");
 	e_unlock_teez(ptee);
 
 	switch (ret) {
